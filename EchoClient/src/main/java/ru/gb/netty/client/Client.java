@@ -45,7 +45,7 @@ public class Client {
 
             Channel channel = bootstrap.connect("localhost", 9020).sync().channel();
             while (true) {
-                channel.writeAndFlush("Hello world!!! ");
+                channel.writeAndFlush("Hello world!!! " + new Date());
                 Thread.sleep(5000);
 
                 }
