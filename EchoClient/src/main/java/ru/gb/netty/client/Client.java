@@ -6,8 +6,11 @@ import io.netty.channel.nio.NioEventLoopGroup;
 import io.netty.channel.socket.nio.NioSocketChannel;
 import io.netty.handler.codec.LengthFieldBasedFrameDecoder;
 import io.netty.handler.codec.LengthFieldPrepender;
-import io.netty.handler.codec.string.StringDecoder;
-import io.netty.handler.codec.string.StringEncoder;
+import ru.gb.netty.handler.JsonDecoder;
+import ru.gb.netty.handler.JsonEncoder;
+import ru.gb.netty.lite.*;
+import java.io.IOException;
+import java.io.RandomAccessFile;
 import java.util.Date;
 
 public class Client {
@@ -16,7 +19,7 @@ public class Client {
 
     }
 
-    public void run() throws InterruptedException{
+    public void run() throws InterruptedException {
         NioEventLoopGroup worker = new NioEventLoopGroup(1);
         try {
             Bootstrap bootstrap = new Bootstrap()
@@ -28,15 +31,20 @@ public class Client {
                             ch.pipeline().addLast(
                                     new LengthFieldBasedFrameDecoder(512, 0, 2, 0, 2),
                                     new LengthFieldPrepender(2),
-                                    new StringEncoder(),
-                                    new StringDecoder(),
-                                    new SimpleChannelInboundHandler<String>() {
+                                    new JsonEncoder(),
+                                    new JsonDecoder(),
+                                    new SimpleChannelInboundHandler<Message>() {
                                         @Override
-                                        protected void channelRead0(ChannelHandlerContext ctx, String msg) {
-                                            System.out.println("Incoming message server: " + msg);
+                                        protected void channelRead0(ChannelHandlerContext ctx, Message msg) throws IOException {
+                                            if (msg instanceof FileMessage) {
+                                                var message = (FileMessage) msg;
+                                                try (final RandomAccessFile accessFile = new RandomAccessFile("Text", "rw")) {
+                                                    accessFile.write(message.getContent());
+                                                }
+                                                ctx.close();
+                                            }
                                         }
                                     }
-
                             );
                         }
                     })
@@ -45,12 +53,32 @@ public class Client {
 
             Channel channel = bootstrap.connect("localhost", 9020).sync().channel();
             while (true) {
-                channel.writeAndFlush("Hello world!!! ");
-                Thread.sleep(5000);
 
+                final DownloadFileRequestMessage message = new DownloadFileRequestMessage();
+                message.setPath("C:\\Users\\budar\\IdeaProjects\\Netty\\test1.json");
+                channel.writeAndFlush(message);
+
+                DateMessage dateMessage = new DateMessage();
+                dateMessage.setData(new Date());
+                channel.writeAndFlush(dateMessage);
+
+                TextMessage textmessage = new TextMessage();
+                textmessage.setText("New text from client");
+                channel.writeAndFlush(textmessage);
+
+
+                try {
+                    Thread.sleep(1000);
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
                 }
-        } finally{
-            worker.shutdownGracefully();
+            }
+
+            } finally{
+                worker.shutdownGracefully();
+            }
         }
     }
-}
+
+
+
