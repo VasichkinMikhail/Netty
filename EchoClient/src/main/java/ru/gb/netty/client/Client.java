@@ -6,22 +6,25 @@ import io.netty.channel.nio.NioEventLoopGroup;
 import io.netty.channel.socket.nio.NioSocketChannel;
 import io.netty.handler.codec.LengthFieldBasedFrameDecoder;
 import io.netty.handler.codec.LengthFieldPrepender;
+import ru.gb.netty.database.AuthLoginPassword;
 import ru.gb.netty.handler.JsonDecoder;
 import ru.gb.netty.handler.JsonEncoder;
-import ru.gb.netty.lite.*;
+import ru.gb.netty.message.*;
+
 import java.io.IOException;
 import java.io.RandomAccessFile;
-import java.util.Date;
 
 public class Client {
     public static void main(String[] args) throws InterruptedException {
+        final AuthLoginPassword authLoginPassword = new AuthLoginPassword();
+        authLoginPassword.authService();
         new Client().run();
 
     }
 
     public void run() throws InterruptedException {
         NioEventLoopGroup worker = new NioEventLoopGroup(1);
-        try {
+        try{
             Bootstrap bootstrap = new Bootstrap()
                     .group(worker)
                     .channel(NioSocketChannel.class)
@@ -38,7 +41,7 @@ public class Client {
                                         protected void channelRead0(ChannelHandlerContext ctx, Message msg) throws IOException {
                                             if (msg instanceof FileMessage) {
                                                 var message = (FileMessage) msg;
-                                                try (final RandomAccessFile accessFile = new RandomAccessFile("Text", "rw")) {
+                                                try (final RandomAccessFile accessFile = new RandomAccessFile("Text2", "rw")) {
                                                     accessFile.write(message.getContent());
                                                 }
                                                 ctx.close();
@@ -51,34 +54,37 @@ public class Client {
 
                     .option(ChannelOption.SO_KEEPALIVE, true);
 
-            Channel channel = bootstrap.connect("localhost", 9020).sync().channel();
-            while (true) {
+//            Channel channel = bootstrap.connect("localhost", 9020).sync().channel();
+               while (true) {
 
-                final DownloadFileRequestMessage message = new DownloadFileRequestMessage();
-                message.setPath("C:\\Users\\budar\\IdeaProjects\\Netty\\test1.json");
-                channel.writeAndFlush(message);
+                ChannelFuture channelFuture = bootstrap.connect("localhost", 9020).sync();
+                channelFuture.channel().writeAndFlush(new RequestFileMessage());
+                channelFuture.channel().closeFuture().sync();
+//            while (true) {
+//
+//                final DownloadFileRequestMessage message = new DownloadFileRequestMessage();
+//                message.setPath("C:\\Users\\budar\\IdeaProjects\\Netty\\1");
+//                channel.writeAndFlush(message);
+//
+//                DateMessage dateMessage = new DateMessage();
+//                dateMessage.setData(new Date());
+//                channel.writeAndFlush(dateMessage);
+//
+//                TextMessage textmessage = new TextMessage();
+//                textmessage.setText("New text from client");
+//                channel.writeAndFlush(textmessage);
 
-                DateMessage dateMessage = new DateMessage();
-                dateMessage.setData(new Date());
-                channel.writeAndFlush(dateMessage);
 
-                TextMessage textmessage = new TextMessage();
-                textmessage.setText("New text from client");
-                channel.writeAndFlush(textmessage);
+                //               Thread.sleep(1000);
+//            } catch (InterruptedException e) {
+//                e.printStackTrace();
 
-
-                try {
-                    Thread.sleep(1000);
-                } catch (InterruptedException e) {
-                    e.printStackTrace();
-                }
             }
-
-            } finally{
-                worker.shutdownGracefully();
-            }
+        }finally{
+            worker.shutdownGracefully();
         }
-    }
+        }
 
+}
 
 

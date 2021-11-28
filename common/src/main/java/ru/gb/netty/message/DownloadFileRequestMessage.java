@@ -1,4 +1,4 @@
-package ru.gb.netty.lite;
+package ru.gb.netty.message;
 
 public class DownloadFileRequestMessage extends Message {
     private String path;
@@ -11,3 +11,4 @@ public class DownloadFileRequestMessage extends Message {
         this.path = path;
     }
 }
+//
