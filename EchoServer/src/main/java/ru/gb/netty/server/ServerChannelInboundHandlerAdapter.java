@@ -2,6 +2,7 @@ package ru.gb.netty.server;
 
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.SimpleChannelInboundHandler;
+import ru.gb.netty.database.AuthLoginPassword;
 import ru.gb.netty.message.*;
 
 import java.io.IOException;
@@ -9,8 +10,8 @@ import java.io.RandomAccessFile;
 import java.util.concurrent.Executor;
 
 public class ServerChannelInboundHandlerAdapter extends SimpleChannelInboundHandler<Message> {
-    private static final String FILE_NAME = "C:\\Users\\budar\\IdeaProjects\\Netty\\test1.json";
-    private static final int BUFFER_SIZE = 1024 *64;
+
+    private static final int BUFFER_SIZE = 1024 * 64;
     private final Executor executor;
 
     public ServerChannelInboundHandlerAdapter(Executor executor) {
@@ -20,6 +21,8 @@ public class ServerChannelInboundHandlerAdapter extends SimpleChannelInboundHand
     @Override
     public void channelRegistered(ChannelHandlerContext ctx) throws Exception {
         System.out.println("Chanel is registered");
+       //final AuthLoginPassword authLoginPassword = new AuthLoginPassword();
+        //authLoginPassword.authService();
     }
 
     @Override
@@ -30,6 +33,7 @@ public class ServerChannelInboundHandlerAdapter extends SimpleChannelInboundHand
     @Override
     public void channelActive(ChannelHandlerContext ctx) throws Exception {
         System.out.println("Chanel active");
+
     }
 
     @Override
@@ -60,11 +64,12 @@ public class ServerChannelInboundHandlerAdapter extends SimpleChannelInboundHand
 //                fileMessage.setContent(content);
 //                ctx.writeAndFlush(fileMessage);
         }
-        if (msg instanceof RequestFileMessage) {
+        if (msg instanceof DownloadFileRequestMessage) {
             executor.execute(() -> {
+                var message = (DownloadFileRequestMessage) msg;
 
-                try (var randomAccessFile = new RandomAccessFile(FILE_NAME, "r")) {
-                    final long fileLength = randomAccessFile.length();
+                try (var randomAccessFile = new RandomAccessFile(message.getPath(), "r")) {
+                     long fileLength = randomAccessFile.length();
                     do {
                         var position = randomAccessFile.getFilePointer();
                         final long availableBytes = fileLength - position;
@@ -76,16 +81,16 @@ public class ServerChannelInboundHandlerAdapter extends SimpleChannelInboundHand
                             bytes = new byte[(int) availableBytes];
                         }
                         randomAccessFile.read(bytes);
-                        final FileTransferMessage message = new FileTransferMessage();
-                        message.setContent(bytes);
-                        message.setStartPosition(position);
-                        ctx.writeAndFlush(message);
+                        final FileTransferMessage filemessage = new FileTransferMessage();
+                        filemessage.setContent(bytes);
+                        filemessage.setStartPosition(position);
+                        ctx.writeAndFlush(filemessage).sync();
 
 
                     } while (randomAccessFile.getFilePointer() < fileLength);
                     ctx.writeAndFlush(new EndFileTransferMessage());
 
-                } catch (IOException e) {
+                } catch (IOException | InterruptedException e) {
                     e.printStackTrace();
                 }
             });
