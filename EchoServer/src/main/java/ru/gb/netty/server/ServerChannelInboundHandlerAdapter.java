@@ -2,9 +2,12 @@ package ru.gb.netty.server;
 
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.SimpleChannelInboundHandler;
-import java.util.Date;
+import ru.gb.netty.lite.*;
 
-public class ServerChannelInboundHandlerAdapter extends SimpleChannelInboundHandler<String> {
+import java.io.IOException;
+import java.io.RandomAccessFile;
+
+public class ServerChannelInboundHandlerAdapter extends SimpleChannelInboundHandler<Message> {
 
     @Override
     public void channelRegistered(ChannelHandlerContext ctx) throws Exception {
@@ -29,9 +32,27 @@ public class ServerChannelInboundHandlerAdapter extends SimpleChannelInboundHand
 
 
     @Override
-    protected void channelRead0(ChannelHandlerContext ctx, String msg) throws Exception {
-        System.out.println("Incoming message from client :" + msg);
-        ctx.writeAndFlush(msg + " " + new Date());
+    protected void channelRead0(ChannelHandlerContext ctx, Message msg) throws IOException {
+        if(msg instanceof TextMessage){
+            TextMessage textMessage = (TextMessage) msg;
+            System.out.println("Incoming text message from client :" + textMessage.getText());
+            ctx.writeAndFlush(msg);
+        }
+        if(msg instanceof DateMessage){
+            DateMessage dateMessage= (DateMessage) msg;
+            System.out.println("Incoming date message from client :" + dateMessage.getData());
+            ctx.writeAndFlush(msg);
+        }
+        if(msg instanceof DownloadFileRequestMessage){
+            var message = (DownloadFileRequestMessage) msg;
+            try(RandomAccessFile accessFile = new RandomAccessFile(message.getPath(),"r")){
+                final FileMessage fileMessage = new FileMessage();
+                byte[] content = new byte[(int)accessFile.length()];
+                accessFile.read(content);
+                fileMessage.setContent(content);
+                ctx.writeAndFlush(fileMessage);
+            }
+        }
 
     }
 
