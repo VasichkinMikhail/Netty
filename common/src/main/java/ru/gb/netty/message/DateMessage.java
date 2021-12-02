@@ -1,4 +1,4 @@
-package ru.gb.netty.lite;
+package ru.gb.netty.message;
 
 
 import java.util.Date;
@@ -14,3 +14,4 @@ public class DateMessage extends Message {
         this.data = data;
     }
 }
+//

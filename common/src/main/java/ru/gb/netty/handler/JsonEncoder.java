@@ -4,7 +4,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import io.netty.buffer.ByteBuf;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.handler.codec.MessageToByteEncoder;
-import ru.gb.netty.lite.Message;
+import ru.gb.netty.message.Message;
 
 public class JsonEncoder extends MessageToByteEncoder<Message> {
     private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper();

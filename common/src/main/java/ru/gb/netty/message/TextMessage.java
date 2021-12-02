@@ -1,4 +1,4 @@
-package ru.gb.netty.lite;
+package ru.gb.netty.message;
 
 public class TextMessage extends Message {
 
@@ -12,3 +12,4 @@ public class TextMessage extends Message {
         this.text = text;
     }
 }
+//
