@@ -3,6 +3,6 @@ package ru.gb.netty.database;
 import java.sql.SQLException;
 
 public interface AuthService {
-     String getNicknameByLoginAndPassword() throws SQLException;
+     void createUser(String login, String password, String nickname) throws SQLException;
 
 }

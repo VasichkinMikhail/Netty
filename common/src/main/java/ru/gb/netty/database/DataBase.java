@@ -1,29 +1,24 @@
 package ru.gb.netty.database;
 
 import java.sql.*;
-import java.util.Scanner;
 
-public class DataBase {
+public class DataBase implements AuthService {
     private static Connection connection;
     private static Statement statement;
     private static PreparedStatement registUserStatement;
     private static PreparedStatement authUserLoginStatement;
 
 
-    public static void main(String[] args) {
-        new DataBase().connect();
-    }
-    public  boolean connect() {
+    public void connect() {
         try {
             connection = DriverManager.getConnection("jdbc:sqlite:java.db");
-            System.out.println("Connected to the database");
+            System.out.println("База данных подключенна");
             statement = connection.createStatement();
             createUserTable();
             prepareAllStatement();
-            return true;
         } catch (SQLException e) {
             e.printStackTrace();
-            return false;
+
         }
     }
 
@@ -54,21 +49,26 @@ public class DataBase {
                 ");"
         );
     }
-    public static String AuthUser(String login, String password)  {
+
+    public static String AuthUser(String log, String pass) throws SQLException {
         String nickname = null;
-        try {
-            authUserLoginStatement.setString(1, login);
-            authUserLoginStatement.setString(2, password);
-            ResultSet rs = authUserLoginStatement.executeQuery();
-            if (rs.next()) {
-                nickname = rs.getString(1);
+        if (connection != null) {
+            try {
+                authUserLoginStatement.setString(1, log);
+                authUserLoginStatement.setString(2, pass);
+
+                ResultSet rs = authUserLoginStatement.executeQuery();
+                if (rs.next()){
+                    nickname = rs.getString(1);
+                }rs.close();
+            } catch (SQLException e) {
+                e.printStackTrace();
             }
-            rs.close();
-        } catch (SQLException e) {
-            e.printStackTrace();
-        }
-       return nickname;
+        }return nickname;
+
     }
+
+
 
 
     public static void prepareAllStatement() throws SQLException {
@@ -78,21 +78,24 @@ public class DataBase {
 
     }
 
-    public static boolean createUser(String login, String password, String nickname) {
-        try {
+    public void createUser(String login, String password, String nickname) throws SQLException {
+        if (connection != null) {
+            try {
+                registUserStatement.setString(1, login);
+                registUserStatement.setString(2, password);
+                registUserStatement.setString(3, nickname);
+                System.out.println("Пользователь " + nickname + " добавлен");
+                registUserStatement.execute();
 
-            registUserStatement.setString(1, login);
-            registUserStatement.setString(2, password);
-            registUserStatement.setString(3, nickname);
-            registUserStatement.executeUpdate();
-            return true;
-        } catch (SQLException e) {
-            return false;
+            } catch (SQLException e) {
+                e.printStackTrace();
+            }
         }
     }
+}
 
 
-    }
+
 
 
 
