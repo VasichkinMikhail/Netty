@@ -7,7 +7,10 @@ import io.netty.channel.socket.nio.NioServerSocketChannel;
 import io.netty.channel.socket.nio.NioSocketChannel;
 import io.netty.handler.codec.LengthFieldBasedFrameDecoder;
 import io.netty.handler.codec.LengthFieldPrepender;
+import io.netty.handler.ssl.ClientAuth;
+import ru.gb.netty.database.AuthClient;
 import ru.gb.netty.database.AuthLoginPassword;
+import ru.gb.netty.database.AuthService;
 import ru.gb.netty.database.DataBase;
 import ru.gb.netty.handler.JsonDecoder;
 import ru.gb.netty.handler.JsonEncoder;
@@ -23,20 +26,17 @@ import java.util.logging.LogRecord;
 
 
 public class Server {
-    public static void main(String[] args) throws InterruptedException, SQLException {
 
-
+    public static void main(String[] args) throws SQLException, InterruptedException {
         new Server().run();
     }
 
     public void run() throws InterruptedException, SQLException {
-        final DataBase dataBase = new DataBase();
-        dataBase.connect();
-        final AuthLoginPassword authLoginPassword = new AuthLoginPassword();
-        authLoginPassword.authService();
+
         NioEventLoopGroup bossGroup = new NioEventLoopGroup(1);
         NioEventLoopGroup workersGroup = new NioEventLoopGroup();
         ExecutorService threadPool = Executors.newCachedThreadPool();
+
         try {
             ServerBootstrap serverBootstrap = new ServerBootstrap()
                     .group(bossGroup, workersGroup)
@@ -45,6 +45,8 @@ public class Server {
 
                         @Override
                         protected void initChannel(NioSocketChannel ch) throws Exception {
+
+
                             ch.pipeline().addLast(
                                     new LengthFieldBasedFrameDecoder(1024*1024, 0, 3, 0, 3),//погуглим
                                     new LengthFieldPrepender(3),
@@ -71,4 +73,5 @@ public class Server {
 
 
     }
+
 }
