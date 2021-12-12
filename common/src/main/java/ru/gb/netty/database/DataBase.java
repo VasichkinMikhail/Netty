@@ -1,8 +1,9 @@
 package ru.gb.netty.database;
 
+import javax.management.Query;
 import java.sql.*;
 
-public class DataBase implements AuthService {
+public class DataBase  {
     private static Connection connection;
     private static Statement statement;
     private static PreparedStatement registUserStatement;
@@ -16,6 +17,7 @@ public class DataBase implements AuthService {
             statement = connection.createStatement();
             createUserTable();
             prepareAllStatement();
+
         } catch (SQLException e) {
             e.printStackTrace();
 
@@ -50,12 +52,12 @@ public class DataBase implements AuthService {
         );
     }
 
-    public static String AuthUser(String log, String pass) throws SQLException {
+    public static String AuthUser(AuthClient client) throws SQLException {
         String nickname = null;
         if (connection != null) {
             try {
-                authUserLoginStatement.setString(1, log);
-                authUserLoginStatement.setString(2, pass);
+                authUserLoginStatement.setString(1, client.getLogin());
+                authUserLoginStatement.setString(2, client.getPassword());
 
                 ResultSet rs = authUserLoginStatement.executeQuery();
                 if (rs.next()){
@@ -78,13 +80,13 @@ public class DataBase implements AuthService {
 
     }
 
-    public void createUser(String login, String password, String nickname) throws SQLException {
+    public void createUser(AuthClient client) throws SQLException {
         if (connection != null) {
             try {
-                registUserStatement.setString(1, login);
-                registUserStatement.setString(2, password);
-                registUserStatement.setString(3, nickname);
-                System.out.println("Пользователь " + nickname + " добавлен");
+                registUserStatement.setString(1, client.getLogin());
+                registUserStatement.setString(2, client.getPassword());
+                registUserStatement.setString(3, client.getNickname());
+                System.out.println("Пользователь " + client.getNickname() + " добавлен");
                 registUserStatement.execute();
 
             } catch (SQLException e) {

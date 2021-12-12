@@ -21,8 +21,6 @@ public class ServerChannelInboundHandlerAdapter extends SimpleChannelInboundHand
     @Override
     public void channelRegistered(ChannelHandlerContext ctx) throws Exception {
         System.out.println("Chanel is registered");
-       //final AuthLoginPassword authLoginPassword = new AuthLoginPassword();
-        //authLoginPassword.authService();
     }
 
     @Override
@@ -54,15 +52,7 @@ public class ServerChannelInboundHandlerAdapter extends SimpleChannelInboundHand
             DateMessage dateMessage = (DateMessage) msg;
             System.out.println("Incoming date message from client :" + dateMessage.getData());
             ctx.writeAndFlush(msg);
-//        }
-//        if(msg instanceof DownloadFileRequestMessage){
-//            var message = (DownloadFileRequestMessage) msg;
-//            try(RandomAccessFile accessFile = new RandomAccessFile(message.getPath(),"r")){
-//                final FileMessage fileMessage = new FileMessage();
-//                byte[] content = new byte[(int)accessFile.length()];
-//                accessFile.read(content);
-//                fileMessage.setContent(content);
-//                ctx.writeAndFlush(fileMessage);
+
         }
         if (msg instanceof DownloadFileRequestMessage) {
             executor.execute(() -> {

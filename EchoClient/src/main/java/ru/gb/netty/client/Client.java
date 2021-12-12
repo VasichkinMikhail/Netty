@@ -6,7 +6,9 @@ import io.netty.channel.nio.NioEventLoopGroup;
 import io.netty.channel.socket.nio.NioSocketChannel;
 import io.netty.handler.codec.LengthFieldBasedFrameDecoder;
 import io.netty.handler.codec.LengthFieldPrepender;
+import ru.gb.netty.database.AuthClient;
 import ru.gb.netty.database.AuthLoginPassword;
+import ru.gb.netty.database.AuthService;
 import ru.gb.netty.database.DataBase;
 import ru.gb.netty.handler.JsonDecoder;
 import ru.gb.netty.handler.JsonEncoder;
@@ -18,14 +20,17 @@ import java.sql.SQLException;
 import java.util.Scanner;
 
 public class Client {
-    public static void main(String[] args) throws InterruptedException, SQLException {
+    public static void main(String[] args) throws SQLException, InterruptedException {
         new Client().run();
-
     }
+
 
     public void run() throws InterruptedException, SQLException {
         NioEventLoopGroup worker = new NioEventLoopGroup(1);
+        final Scanner in = new Scanner(System.in);
+         AuthClient client = new AuthClient();
         try{
+
             Bootstrap bootstrap = new Bootstrap()
                     .group(worker)
                     .channel(NioSocketChannel.class)
@@ -63,10 +68,13 @@ public class Client {
                    System.out.println("Client started");
 
                    ChannelFuture channelFuture = bootstrap.connect("localhost", 9030).sync();
+
                    final DownloadFileRequestMessage requestMessage = new DownloadFileRequestMessage();
-                   requestMessage.setPath("C:\\Users\\budar\\IdeaProjects\\Netty\\1");
-                   channelFuture.channel().writeAndFlush(requestMessage);
-                   channelFuture.channel().closeFuture().sync();
+
+
+                requestMessage.setPath("C:\\Users\\budar\\IdeaProjects\\Netty\\1");
+                channelFuture.channel().writeAndFlush(requestMessage);
+                channelFuture.channel().closeFuture().sync();
 
         }finally{
             worker.shutdownGracefully();
