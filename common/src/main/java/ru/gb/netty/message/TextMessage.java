@@ -12,4 +12,3 @@ public class TextMessage extends Message {
         this.text = text;
     }
 }
-//
