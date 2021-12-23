@@ -1,6 +1,9 @@
-package ru.gb.netty.authDatabase;
+package ru.gb.netty.server;
 
-import java.io.IOException;
+import ru.gb.netty.authDatabase.AuthClient;
+import ru.gb.netty.authDatabase.RegClient;
+
+
 import java.sql.*;
 
 public class DataBase  {
@@ -23,36 +26,33 @@ public class DataBase  {
     }
 
     private static void createUserTable() throws SQLException {
-        statement.executeUpdate("create table if not exists userBase (" +
+        statement.executeUpdate("create table if not exists BaseUser (" +
                 "id INTEGER PRIMARY KEY AUTOINCREMENT," +
-                "clientName VARCHAR(32) UNIQUE NOT NULL," +
                 "login  VARCHAR(32) UNIQUE NOT NULL," +
-                "password VARCHAR(32) UNIQUE NOT NULL" +
+                "password VARCHAR(32)  NOT NULL" +
                 ");"
         );
     }
 
-    public String getClients(AuthClient client) throws SQLException, IOException {
-        String clientName = null;
+    public String getClients(AuthClient client) throws SQLException {
+        String login = null;
         if (connection != null) {
-            try (PreparedStatement ps = connection.prepareStatement("SELECT clientName FROM userBase WHERE login = ? AND password = ?;")) {
-                ps.setString(1, client.getLog());
-                ps.setString(2, client.getPass());
+            try (PreparedStatement ps = connection.prepareStatement("SELECT login FROM BaseUser WHERE password = ?;")) {
+                ps.setString(1, client.getPass());
                 ResultSet rs = ps.executeQuery();
                 if(rs.next()){
-                    clientName = rs.getString(1);
+                    login = rs.getString(1);
                 }rs.close();
             }
         }
-        return clientName;
+        return login;
     }
 
-    public void getNewClients(RegClient client) throws SQLException, IOException {
+    public void getNewClients(RegClient client) throws SQLException {
         if (connection != null) {
-            try (PreparedStatement ps = connection.prepareStatement("INSERT INTO userBase (clientName, login, password) VALUES(?, ?, ?);")) {
-                ps.setString(1, client.getName());
-                ps.setString(2, client.getLog());
-                ps.setString(3, client.getPass());
+            try (PreparedStatement ps = connection.prepareStatement("INSERT INTO BaseUser ( login, password) VALUES( ?, ?);")) {
+                ps.setString(1, client.getLog());
+                ps.setString(2, client.getPass());
 
                 ps.executeUpdate();
             }

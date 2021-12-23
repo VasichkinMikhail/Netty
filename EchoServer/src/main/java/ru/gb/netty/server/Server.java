@@ -7,11 +7,8 @@ import io.netty.channel.socket.nio.NioServerSocketChannel;
 import io.netty.channel.socket.nio.NioSocketChannel;
 import io.netty.handler.codec.LengthFieldBasedFrameDecoder;
 import io.netty.handler.codec.LengthFieldPrepender;
-import ru.gb.netty.authDatabase.*;
 import ru.gb.netty.handler.JsonDecoder;
 import ru.gb.netty.handler.JsonEncoder;
-
-import java.sql.SQLException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
@@ -19,13 +16,13 @@ import java.util.concurrent.Executors;
 public class Server {
 
 
-    public static void main(String[] args) throws SQLException, InterruptedException {
+    public static void main(String[] args) throws InterruptedException {
         new Server().run();
     }
 
 
 
-    public void run() throws InterruptedException, SQLException {
+    public void run() throws InterruptedException{
 
         NioEventLoopGroup bossGroup = new NioEventLoopGroup(1);
         NioEventLoopGroup workersGroup = new NioEventLoopGroup();
@@ -39,8 +36,9 @@ public class Server {
                     .childHandler(new ChannelInitializer<NioSocketChannel>() {
 
 
+
                         @Override
-                        protected void initChannel(NioSocketChannel ch) throws Exception {
+                        protected void initChannel(NioSocketChannel ch) {
 
 
                             ch.pipeline().addLast(
@@ -49,7 +47,6 @@ public class Server {
                                     new JsonEncoder(),
                                     new JsonDecoder(),
                                     new ServerChannelHandlerAdapter(threadPool)
-
                             );
                         }
 
@@ -60,8 +57,6 @@ public class Server {
             Channel channel = serverBootstrap.bind(9010).sync().channel();
                 System.out.println("Server started");
                 new DataBase().connect();
-
-
                 channel.closeFuture().sync();
             } finally {
                 bossGroup.shutdownGracefully();
