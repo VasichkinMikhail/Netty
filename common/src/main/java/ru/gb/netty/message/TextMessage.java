@@ -4,6 +4,7 @@ public class TextMessage extends Message {
 
     private String text;
 
+
     public String getText() {
         return text;
     }

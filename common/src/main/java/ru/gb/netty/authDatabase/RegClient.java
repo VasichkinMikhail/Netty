@@ -9,7 +9,6 @@ public class RegClient extends Message {
      private String log;
      private String pass;
 
-
      public RegClient() {
 
      }

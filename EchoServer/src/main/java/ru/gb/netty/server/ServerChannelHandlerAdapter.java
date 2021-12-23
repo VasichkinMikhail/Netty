@@ -69,6 +69,7 @@ public class ServerChannelHandlerAdapter extends SimpleChannelInboundHandler<Mes
                 ctx.writeAndFlush(msg);
             }
             if (msg instanceof DownloadFileRequestMessage) {
+
                 executor.execute(() -> {
                     var message = (DownloadFileRequestMessage) msg;
 

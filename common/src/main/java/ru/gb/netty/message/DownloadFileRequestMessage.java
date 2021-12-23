@@ -1,6 +1,7 @@
 package ru.gb.netty.message;
 
 public class DownloadFileRequestMessage extends Message {
+
     private String path;
 
     public String getPath() {

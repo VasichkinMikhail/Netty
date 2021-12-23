@@ -10,6 +10,7 @@ import ru.gb.netty.message.Message;
 import java.util.List;
 
 public class JsonDecoder extends MessageToMessageDecoder<ByteBuf> {
+
     private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper();
 
     @Override

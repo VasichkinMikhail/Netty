@@ -35,6 +35,7 @@ public class DataBase  {
     }
 
     public String getClients(AuthClient client) throws SQLException {
+
         String login = null;
         if (connection != null) {
             try (PreparedStatement ps = connection.prepareStatement("SELECT login FROM BaseUser WHERE password = ?;")) {

@@ -44,6 +44,7 @@ public class Client {
                                         @Override
                                         protected void channelRead0(ChannelHandlerContext ctx, Message msg) throws Exception {
                                             if (msg instanceof AuthClient) {
+
                                                     System.out.println("Попробуйте ещё раз!\n" +
                                                             "Авторизируйтесь ... \n" +
                                                             "Введите Ваш логин ... ");

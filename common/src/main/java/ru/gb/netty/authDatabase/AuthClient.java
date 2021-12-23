@@ -9,6 +9,7 @@ public class  AuthClient extends Message {
         private String log;
         private String pass;
 
+
         public AuthClient(){}
         public String getLog() {return log;}
 

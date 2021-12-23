@@ -55,6 +55,7 @@ public class Server {
                     .childOption(ChannelOption.SO_KEEPALIVE, true);
 
             Channel channel = serverBootstrap.bind(9010).sync().channel();
+
                 System.out.println("Server started");
                 new DataBase().connect();
                 channel.closeFuture().sync();

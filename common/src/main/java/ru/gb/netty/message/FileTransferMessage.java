@@ -5,6 +5,7 @@ public class FileTransferMessage extends Message{
     private long startPosition;
 
     public byte[] getContent() {
+
         return content;
     }
 
