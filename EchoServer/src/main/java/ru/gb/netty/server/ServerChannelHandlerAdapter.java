@@ -1,6 +1,5 @@
 package ru.gb.netty.server;
 
-import io.netty.channel.Channel;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.SimpleChannelInboundHandler;
 
@@ -8,9 +7,6 @@ import ru.gb.netty.authDatabase.*;
 import ru.gb.netty.message.*;
 
 import java.io.*;
-import java.sql.SQLException;
-import java.util.ArrayList;
-import java.util.List;
 import java.util.concurrent.Executor;
 
 public class ServerChannelHandlerAdapter extends SimpleChannelInboundHandler<Message> {
@@ -20,61 +16,50 @@ public class ServerChannelHandlerAdapter extends SimpleChannelInboundHandler<Mes
     DataBase dataBase = new DataBase();
 
 
-
-
-
-
-
     public ServerChannelHandlerAdapter(Executor executor) {
         this.executor = executor;
     }
 
     @Override
-    public void channelRegistered(ChannelHandlerContext ctx) throws Exception {
+    public void channelRegistered(ChannelHandlerContext ctx){
         System.out.println("Channel is registered");
     }
 
 
     @Override
-    public void channelUnregistered(ChannelHandlerContext ctx) throws Exception {
+    public void channelUnregistered(ChannelHandlerContext ctx){
         System.out.println("Chanel is unregistered");
     }
 
     @Override
-    public void channelActive(ChannelHandlerContext ctx) throws Exception {
+    public void channelActive(ChannelHandlerContext ctx) {
         System.out.println("Channel active");
     }
 
     @Override
-    public void channelInactive(ChannelHandlerContext ctx) throws Exception {
+    public void channelInactive(ChannelHandlerContext ctx){
         System.out.println("Channel inactive");
     }
 
 
     @Override
     protected void channelRead0(ChannelHandlerContext ctx, Message msg) throws Exception {
-             if(msg instanceof AuthClient){
+             if(msg instanceof AuthClient) {
                  var message = (AuthClient) msg;
-
-                 if(message.getName().equals(dataBase.getClients(message))){
-                     ctx.writeAndFlush(msg);
-                     System.out.println("Авторизация прошла");
-
-                 }else {
-                     System.out.println("Авторизация не прошла");
-                     final AuthService service = new AuthService();
-                     ctx.writeAndFlush(service).sync();
-                     ctx.writeAndFlush(msg);
+                 if (message.getLog().equals(dataBase.getClients(message))) {
+                     ctx.writeAndFlush(new Verification());
+                 } else {
+                     ctx.writeAndFlush(new AuthClient());
 
                  }
-
              }
+
              if (msg instanceof RegClient){
-                 final AuthService service = new AuthService();
                  var message = (RegClient) msg;
-                 ctx.writeAndFlush(msg);
                  dataBase.getNewClients(message);
-                 ctx.writeAndFlush(service).sync();
+                 System.out.println("Регистрация прошла успешно");
+                 ctx.writeAndFlush(new AuthClient());
+
 
              }
 
@@ -83,13 +68,8 @@ public class ServerChannelHandlerAdapter extends SimpleChannelInboundHandler<Mes
                 System.out.println("Incoming text message from client :" + textMessage.getText());
                 ctx.writeAndFlush(msg);
             }
-            if (msg instanceof DateMessage) {
-                DateMessage dateMessage = (DateMessage) msg;
-                System.out.println("Incoming date message from client :" + dateMessage.getData());
-                ctx.writeAndFlush(msg);
-
-            }
             if (msg instanceof DownloadFileRequestMessage) {
+
                 executor.execute(() -> {
                     var message = (DownloadFileRequestMessage) msg;
 
@@ -117,6 +97,7 @@ public class ServerChannelHandlerAdapter extends SimpleChannelInboundHandler<Mes
                         ctx.close();
 
 
+
                     } catch (IOException | InterruptedException e) {
                         e.printStackTrace();
                     }
@@ -140,7 +121,7 @@ public class ServerChannelHandlerAdapter extends SimpleChannelInboundHandler<Mes
 
 
     @Override
-    public void exceptionCaught(ChannelHandlerContext ctx, Throwable cause) throws Exception {
+    public void exceptionCaught(ChannelHandlerContext ctx, Throwable cause){
         System.out.println("Catch cause" + cause.getMessage());
         ctx.close();
     }

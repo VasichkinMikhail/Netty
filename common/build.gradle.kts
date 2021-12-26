@@ -12,6 +12,7 @@ dependencies {
     implementation("com.fasterxml.jackson.core:jackson-databind:2.13.0")
     implementation("com.fasterxml.jackson.core:jackson-annotations:2.13.0")
 
+
     implementation ("org.xerial:sqlite-jdbc:3.30.1")
 }
 

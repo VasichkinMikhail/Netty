@@ -12,19 +12,19 @@ import ru.gb.netty.handler.JsonEncoder;
 import ru.gb.netty.message.*;
 
 import java.io.*;
-import java.net.Socket;
-import java.sql.SQLException;
-import java.util.Scanner;
+
 
 public class Client {
 
-
-    public static void main(String[] args) throws SQLException, InterruptedException, IOException {
+    public static void main(String[] args) throws  InterruptedException, IOException {
         new Client().run();
     }
 
-
-    public void run() throws InterruptedException, SQLException, IOException {
+    public void run() throws InterruptedException, IOException {
+        final BufferedReader bufferedReader = new BufferedReader(new InputStreamReader(System.in));
+        final DownloadFileRequestMessage requestMessage = new DownloadFileRequestMessage();
+        final AuthClient authClient = new AuthClient();
+        final RegClient regClient = new RegClient();
 
         NioEventLoopGroup worker = new NioEventLoopGroup(1);
         try {
@@ -44,27 +44,39 @@ public class Client {
                                         @Override
                                         protected void channelRead0(ChannelHandlerContext ctx, Message msg) throws Exception {
                                             if (msg instanceof AuthClient) {
-                                                System.out.println(((AuthClient) msg).getName() + " авторизация прошла успешно!");
+
+                                                    System.out.println("Попробуйте ещё раз!\n" +
+                                                            "Авторизируйтесь ... \n" +
+                                                            "Введите Ваш логин ... ");
+                                                    authClient.setLog(bufferedReader.readLine());
+
+                                                    System.out.println("Введите Ваш пароль ... ");
+                                                    authClient.setPass(bufferedReader.readLine());
+
+                                                    ctx.writeAndFlush(authClient);
+
                                             }
+                                            if(msg instanceof Verification){
+                                                System.out.println("Укажите путь к файлу который нужно загрузить...\n" +
+                                                        "Пример ввода:\n" +
+                                                        "C:\\Users\\budar\\IdeaProjects\\Netty\\1");
+                                                requestMessage.setPath(bufferedReader.readLine());
+                                                ctx.channel().writeAndFlush(requestMessage);
+                                            }
+
                                             if (msg instanceof RegClient) {
-                                                System.out.println(((RegClient) msg).getName() + " регистрация прошла успешно!");
-
+                                                System.out.println(((RegClient) msg).getLog() + " регистрация прошла успешно!");
                                             }
-                                            if (msg instanceof AuthService) {
-                                                var message = (AuthService) msg;
-                                                System.out.println("Попробуем еще раз ...");
-                                                message.authorisation();
-                                            }
-
 
                                             if (msg instanceof TextMessage) {
                                                 System.out.println("Receive message " + ((TextMessage) msg).getText());
+
                                             }
 
                                             if (msg instanceof FileTransferMessage) {
                                                 System.out.println("New incoming file download message");
                                                 var message = (FileTransferMessage) msg;
-                                                try (var accessFile = new RandomAccessFile("file", "rw")) {
+                                                try (var accessFile = new RandomAccessFile("NewFile", "rw")) {
                                                     accessFile.seek(message.getStartPosition());
                                                     accessFile.write(message.getContent());
                                                 }
@@ -84,41 +96,35 @@ public class Client {
             System.out.println("Client started");
             ChannelFuture channelFuture = bootstrap.connect("localhost", 9010).sync();
 
-            final Scanner scanner = new Scanner(System.in);
-            final AuthService service = new AuthService();
-            System.out.println("Здравствуйте\n" +
-                    "Если Вы хотите авторизоваться введите Aug\n" +
-                    "Если Вы хотите зарегистрироваться введите Reg");
-            String answer = scanner.nextLine();
-            if (answer.equals("Aug")) {
-                channelFuture.channel().writeAndFlush(service.authorisation());
-            }
-            else if (answer.equals("Reg")){
-                channelFuture.channel().writeAndFlush(service.registration());
-            }else {
-                System.out.println("Не корректный ввод!");
+            System.out.println("Здравствуйте!\n" +
+                    "Если Вы хотите авторизироватся введите Auth..\n" +
+                    "Если у Вас ещё нет аккаунта введите Reg...");
+            String answer = bufferedReader.readLine();
+            if(answer.equals("Auth")) {
+                System.out.println("Авторизируйтесь ... \n" +
+                        "Введите Ваш логин ... ");
+                authClient.setLog(bufferedReader.readLine());
+
+                System.out.println("Введите Ваш пароль ... ");
+                authClient.setPass(bufferedReader.readLine());
+
+                channelFuture.channel().writeAndFlush(authClient);
                 channelFuture.channel().closeFuture().sync();
+
+            }if(answer.equals("Reg")){
+                System.out.println("Зарегистрируйтесь ... \n " +
+                        "Введите Ваш логин ... ");
+                regClient.setLog(bufferedReader.readLine());
+
+                System.out.println("Введите Ваш пароль ... ");
+                regClient.setPass(bufferedReader.readLine());
+
+                channelFuture.channel().writeAndFlush(regClient);
+                channelFuture.channel().closeFuture().sync();
+
             }
-
-
-
-
-
-
-            TextMessage textMessage = new TextMessage();
-            textMessage.setText("New incoming message");
-            channelFuture.channel().writeAndFlush(textMessage);
-
-
-            final DownloadFileRequestMessage requestMessage = new DownloadFileRequestMessage();
-            requestMessage.setPath("C:\\Users\\budar\\IdeaProjects\\Netty\\1");
-            channelFuture.channel().writeAndFlush(requestMessage);
-            channelFuture.channel().closeFuture().sync();
-
-
         } finally {
             worker.shutdownGracefully();
-
         }
     }
 }

@@ -7,6 +7,7 @@ import io.netty.handler.codec.MessageToByteEncoder;
 import ru.gb.netty.message.Message;
 
 public class JsonEncoder extends MessageToByteEncoder<Message> {
+
     private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper();
 
     @Override
