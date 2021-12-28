@@ -23,8 +23,11 @@ public class Client {
     public void run() throws InterruptedException, IOException {
         final BufferedReader bufferedReader = new BufferedReader(new InputStreamReader(System.in));
         final DownloadFileRequestMessage requestMessage = new DownloadFileRequestMessage();
+        final AploadFileRequestMessage apload = new AploadFileRequestMessage();
         final AuthClient authClient = new AuthClient();
         final RegClient regClient = new RegClient();
+
+
 
         NioEventLoopGroup worker = new NioEventLoopGroup(1);
         try {
@@ -44,28 +47,57 @@ public class Client {
                                         @Override
                                         protected void channelRead0(ChannelHandlerContext ctx, Message msg) throws Exception {
                                             if (msg instanceof AuthClient) {
-
-                                                    System.out.println("Попробуйте ещё раз!\n" +
+                                                System.out.println("Попробуйте ещё раз!\n" +
                                                             "Авторизируйтесь ... \n" +
                                                             "Введите Ваш логин ... ");
-                                                    authClient.setLog(bufferedReader.readLine());
+                                                authClient.setLog(bufferedReader.readLine());
 
-                                                    System.out.println("Введите Ваш пароль ... ");
-                                                    authClient.setPass(bufferedReader.readLine());
+                                                System.out.println("Введите Ваш пароль ... ");
+                                                authClient.setPass(bufferedReader.readLine());
 
-                                                    ctx.writeAndFlush(authClient);
+                                                ctx.writeAndFlush(authClient);
 
                                             }
                                             if(msg instanceof Verification){
-                                                System.out.println("Укажите путь к файлу который нужно загрузить...\n" +
-                                                        "Пример ввода:\n" +
-                                                        "C:\\Users\\budar\\IdeaProjects\\Netty\\1");
-                                                requestMessage.setPath(bufferedReader.readLine());
-                                                ctx.channel().writeAndFlush(requestMessage);
+                                                System.out.println("Если Вы хотите загрузить файл на сервер введите Download...\n" +
+                                                        "Если Вы хотите скачать файл введите Apload...");
+                                                String answer = bufferedReader.readLine();
+                                                if(answer.equals("Download")) {
+                                                    System.out.println("Укажите путь к файлу который нужно загрузить...\n" +
+                                                            "Пример ввода:\n" +
+                                                            "C:\\Users\\budar\\IdeaProjects\\Netty");
+                                                    requestMessage.setPath(bufferedReader.readLine());
+                                                    System.out.println("Введите имя файла...");
+                                                    requestMessage.setFileName(bufferedReader.readLine());
+                                                    ctx.writeAndFlush(requestMessage);
+
+                                                }else if (answer.equals("Apload")){
+                                                    try (final FileReader fileReader = new FileReader("fileList.txt")){
+                                                        System.out.println("Список файлов на сервере:");
+                                                        int c;
+                                                        while((c=fileReader.read())!=-1) {
+                                                            System.out.print((char) c);
+                                                        }
+
+                                                    System.out.println("Укажите название файла который хотите скачать...");
+                                                    apload.setFileName(bufferedReader.readLine());
+                                                    System.out.println("Укажите путь куда нужно скачать файл..." +
+                                                            "Пример ввода:\n"+
+                                                            "C:\\Users\\budar\\IdeaProjects\\Netty");
+                                                    apload.setPath(bufferedReader.readLine());
+                                                    ctx.writeAndFlush(apload);
+                                                    }
+                                                }
                                             }
 
                                             if (msg instanceof RegClient) {
-                                                System.out.println(((RegClient) msg).getLog() + " регистрация прошла успешно!");
+                                                System.out.println("Пользователь с таким Login существует, попробуйте ещё раз ... \n " +
+                                                        "Введите Ваш логин ... ");
+                                                regClient.setLog(bufferedReader.readLine());
+                                                System.out.println("Введите Ваш пароль ... ");
+                                                regClient.setPass(bufferedReader.readLine());
+                                                ctx.channel().writeAndFlush(regClient);
+
                                             }
 
                                             if (msg instanceof TextMessage) {
@@ -76,16 +108,25 @@ public class Client {
                                             if (msg instanceof FileTransferMessage) {
                                                 System.out.println("New incoming file download message");
                                                 var message = (FileTransferMessage) msg;
-                                                try (var accessFile = new RandomAccessFile("NewFile", "rw")) {
+                                                try (var accessFile = new RandomAccessFile(message.getFileName(), "rw")) {
                                                     accessFile.seek(message.getStartPosition());
                                                     accessFile.write(message.getContent());
+                                                }
+                                            }
+                                            if (msg instanceof ClientFileTransferMessage) {
+                                                System.out.println("New incoming file download message");
+                                                var message = (ClientFileTransferMessage) msg;
+                                                try (var accessFile = new RandomAccessFile(message.getPath()+"\\" + message.getFileName(), "rw")) {
+                                                        accessFile.seek(message.getStartPosition());
+                                                        accessFile.write(message.getContent());
+                                                    }
                                                 }
 
                                                 if (msg instanceof EndFileTransferMessage) {
                                                     ctx.close();
                                                 }
                                             }
-                                        }
+
                                     }
                             );
                         }

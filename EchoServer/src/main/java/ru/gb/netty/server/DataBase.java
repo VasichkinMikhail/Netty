@@ -26,9 +26,9 @@ public class DataBase  {
     }
 
     private static void createUserTable() throws SQLException {
-        statement.executeUpdate("create table if not exists BaseUser (" +
+        statement.executeUpdate("create table if not exists DataBase (" +
                 "id INTEGER PRIMARY KEY AUTOINCREMENT," +
-                "login  VARCHAR(32) UNIQUE NOT NULL," +
+                "login  VARCHAR(32)  NOT NULL," +
                 "password VARCHAR(32)  NOT NULL" +
                 ");"
         );
@@ -38,7 +38,7 @@ public class DataBase  {
 
         String login = null;
         if (connection != null) {
-            try (PreparedStatement ps = connection.prepareStatement("SELECT login FROM BaseUser WHERE password = ?;")) {
+            try (PreparedStatement ps = connection.prepareStatement("SELECT login FROM DataBase WHERE password = ?;")) {
                 ps.setString(1, client.getPass());
                 ResultSet rs = ps.executeQuery();
                 if(rs.next()){
@@ -48,10 +48,25 @@ public class DataBase  {
         }
         return login;
     }
+    public String clientCheck(RegClient regClient) throws SQLException {
+
+        String login = null;
+        if (connection != null) {
+            try (PreparedStatement ps = connection.prepareStatement("SELECT login FROM DataBase WHERE password = ?;")) {
+                ps.setString(1, regClient.getPass());
+                ResultSet rs = ps.executeQuery();
+                if(rs.next()){
+                    login = rs.getString(1);
+                }rs.close();
+            }
+        }
+        return login;
+    }
+
 
     public void getNewClients(RegClient client) throws SQLException {
         if (connection != null) {
-            try (PreparedStatement ps = connection.prepareStatement("INSERT INTO BaseUser ( login, password) VALUES( ?, ?);")) {
+            try (PreparedStatement ps = connection.prepareStatement("INSERT INTO DataBase ( login, password) VALUES( ?, ?);")) {
                 ps.setString(1, client.getLog());
                 ps.setString(2, client.getPass());
 
