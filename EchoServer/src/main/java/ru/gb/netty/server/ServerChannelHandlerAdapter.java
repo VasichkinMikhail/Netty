@@ -56,10 +56,14 @@ public class ServerChannelHandlerAdapter extends SimpleChannelInboundHandler<Mes
 
              if (msg instanceof RegClient){
                  var message = (RegClient) msg;
-                 dataBase.getNewClients(message);
-                 System.out.println("Регистрация прошла успешно");
-                 ctx.writeAndFlush(new AuthClient());
-
+                 if(message.getLog().equals(dataBase.clientCheck(message))){
+                     System.out.println("Такой login существует");
+                     ctx.writeAndFlush(new RegClient());
+                 }else {
+                     dataBase.getNewClients(message);
+                     System.out.println("Регистрация прошла успешно");
+                     ctx.writeAndFlush(new AuthClient());
+                 }
 
              }
 
@@ -72,13 +76,20 @@ public class ServerChannelHandlerAdapter extends SimpleChannelInboundHandler<Mes
 
                 executor.execute(() -> {
                     var message = (DownloadFileRequestMessage) msg;
+                    try (final FileWriter writer = new FileWriter("fileList.txt", true)) {
+                        writer.write(message.getFileName()+"\n");
+                        writer.flush();
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                    }
 
-                    try (var randomAccessFile = new RandomAccessFile(message.getPath(), "r")) {
+                    try (var randomAccessFile = new RandomAccessFile(message.getPath()+"\\" + message.getFileName(), "r")) {
                         long fileLength = randomAccessFile.length();
                         do {
                             var position = randomAccessFile.getFilePointer();
                             final long availableBytes = fileLength - position;
                             byte[] bytes;
+
 
                             if (availableBytes >= BUFFER_SIZE) {
                                 bytes = new byte[BUFFER_SIZE];
@@ -87,6 +98,7 @@ public class ServerChannelHandlerAdapter extends SimpleChannelInboundHandler<Mes
                             }
                             randomAccessFile.read(bytes);
                             final FileTransferMessage filemessage = new FileTransferMessage();
+                            filemessage.setFileName(message.getFileName());
                             filemessage.setContent(bytes);
                             filemessage.setStartPosition(position);
                             ctx.writeAndFlush(filemessage).sync();
@@ -103,6 +115,41 @@ public class ServerChannelHandlerAdapter extends SimpleChannelInboundHandler<Mes
                     }
                 });
             }
+        if (msg instanceof AploadFileRequestMessage) {
+
+            executor.execute(() -> {
+                var message = (AploadFileRequestMessage) msg;
+
+                try (var randomAccessFile = new RandomAccessFile("C:\\Users\\budar\\IdeaProjects\\Netty\\"+ message.getFileName(), "r")) {
+                    long fileLength = randomAccessFile.length();
+                    do {
+                        var position = randomAccessFile.getFilePointer();
+                        final long availableBytes = fileLength - position;
+                        byte[] bytes;
+
+                        if (availableBytes >= BUFFER_SIZE) {
+                            bytes = new byte[BUFFER_SIZE];
+                        } else {
+                            bytes = new byte[(int) availableBytes];
+                        }
+                        randomAccessFile.read(bytes);
+                        final ClientFileTransferMessage transferMessage = new ClientFileTransferMessage();
+                        transferMessage.setFileName(message.getFileName());
+                        transferMessage.setPath(message.getPath());
+                        transferMessage.setContent(bytes);
+                        transferMessage.setStartPosition(position);
+                        ctx.writeAndFlush(transferMessage).sync();
+
+
+                    } while (randomAccessFile.getFilePointer() < fileLength);
+                    ctx.writeAndFlush(new EndFileTransferMessage());
+                    ctx.close();
+
+                } catch (IOException | InterruptedException e) {
+                    e.printStackTrace();
+                }
+            });
+        }
         }
     @Override
     public void channelReadComplete(ChannelHandlerContext ctx) throws Exception {
